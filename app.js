@@ -201,7 +201,7 @@ function emuPadHTML(sys){const p=EMU_PADS[sys]||EMU_PADS.nes;
   const face=p.diamond?`<div class="gm-dia">${p.face.map(([k,l])=>`<button data-gk="${k}" class="ab f-${k}">${l}</button>`).join("")}</div>`:`<div class="gm-ab${p.three?" three":""}">${p.face.map(([k,l])=>`<button data-gk="${k}" class="ab">${l}</button>`).join("")}</div>`;
   return `${sh}<div class="gm-dpad">${[["up","▲"],["left","◀"],["right","▶"],["down","▼"]].map(([k,l])=>`<button data-gk="${k}" class="d-${k}">${l}</button>`).join("")}</div><div class="gm-mid">${p.mid.map(([k,l])=>`<button data-gk="${k}" class="sm">${l}</button>`).join("")}</div>${face}`}
 const KC={ArrowUp:38,ArrowDown:40,ArrowLeft:37,ArrowRight:39,Enter:13,ShiftRight:16};
-function emuKey(k,down){if(!EMU||!EMU.play)return;const code=(EMU_KEYS[EMU.eng]||{})[k];if(!code)return;if(down)emuWake();
+function emuKey(k,down){if(!EMU||!EMU.play)return;const code=(EMU.sys==="sms"?{a:"KeyS",b:"KeyD"}[k]:null)||(EMU_KEYS[EMU.eng]||{})[k];if(!code)return;if(down)emuWake();
   const key=code.startsWith("Key")?code.slice(3).toLowerCase():code==="ShiftRight"?"Shift":code;const kc=KC[code]||(code.startsWith("Key")?code.charCodeAt(3):0);
   const ev=new KeyboardEvent(down?"keydown":"keyup",{code,key,bubbles:true,cancelable:true,location:code==="ShiftRight"?2:0});
   try{Object.defineProperty(ev,"keyCode",{get:()=>kc});Object.defineProperty(ev,"which",{get:()=>kc})}catch(e){}
