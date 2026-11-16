@@ -196,12 +196,13 @@ async function romPlay(id){const r=(NESROMS||[]).find(x=>x.id===id);const sys=(r
 
   emuOpen(id)}
 let EMU=null;
-function emuPadHTML(sys){const p=EMU_PADS[sys]||EMU_PADS.nes;
+const smsSwap=()=>{try{return localStorage.getItem("gjSmsSwap")==="1"}catch(e){return false}};
+function emuPadHTML(sys){let p=EMU_PADS[sys]||EMU_PADS.nes;if(sys==="sms"&&smsSwap())p={...p,face:[["a","2"],["b","1"]]};
   const sh=p.sh?`<div class="gm-sh">${p.sh.map(([k,l])=>`<button data-gk="${k}">${l}</button>`).join("")}</div>`:"";
   const face=p.diamond?`<div class="gm-dia">${p.face.map(([k,l])=>`<button data-gk="${k}" class="ab f-${k}">${l}</button>`).join("")}</div>`:`<div class="gm-ab${p.three?" three":""}">${p.face.map(([k,l])=>`<button data-gk="${k}" class="ab">${l}</button>`).join("")}</div>`;
   return `${sh}<div class="gm-dpad">${[["up","▲"],["left","◀"],["right","▶"],["down","▼"]].map(([k,l])=>`<button data-gk="${k}" class="d-${k}">${l}</button>`).join("")}</div><div class="gm-mid">${p.mid.map(([k,l])=>`<button data-gk="${k}" class="sm">${l}</button>`).join("")}</div>${face}`}
 const KC={ArrowUp:38,ArrowDown:40,ArrowLeft:37,ArrowRight:39,Enter:13,ShiftRight:16};
-function emuKey(k,down){if(!EMU||!EMU.play)return;const code=(EMU.sys==="sms"?{a:"KeyS",b:"KeyD"}[k]:null)||(EMU_KEYS[EMU.eng]||{})[k];if(!code)return;if(down)emuWake();
+function emuKey(k,down){if(!EMU||!EMU.play)return;const code=(EMU.sys==="sms"?({...(smsSwap()?{a:"KeyD",b:"KeyS"}:{a:"KeyS",b:"KeyD"}),start:"KeyZ"})[k]:null)||(EMU_KEYS[EMU.eng]||{})[k];if(!code)return;if(down)emuWake();
   const key=code.startsWith("Key")?code.slice(3).toLowerCase():code==="ShiftRight"?"Shift":code;const kc=KC[code]||(code.startsWith("Key")?code.charCodeAt(3):0);
   const ev=new KeyboardEvent(down?"keydown":"keyup",{code,key,bubbles:true,cancelable:true,location:code==="ShiftRight"?2:0});
   try{Object.defineProperty(ev,"keyCode",{get:()=>kc});Object.defineProperty(ev,"which",{get:()=>kc})}catch(e){}
@@ -211,7 +212,7 @@ async function emuOpen(id){gmEnsure();let rom,core;try{rom=await nesTx("roms","r
   GM={id:"emu",emu:true,nes:false,def:{e:EMU_SYS[sys].e,n:rom.name},g:{LW:256,LH:224},state:"play",rom:id};EMU={eng,sys,play:null,paused:false};
   $("#gm-t").textContent=EMU_SYS[sys].e+" "+rom.name;$("#gm-s").textContent=EMU_SYS[sys].n+" · cargando…";
   $("#gm-tx").innerHTML=`<button class="gm-ib sm" data-nesact="save" aria-label="Guardar partida">💾</button><button class="gm-ib sm" data-nesact="load" aria-label="Cargar partida">▶︎💾</button>`;
-  $("#gm-pad").innerHTML=emuPadHTML(sys);$("#gm-pad").dataset.kind="nes";$("#gm-ov").classList.add("nes","emu");$("#gm-stage").classList.add("nes");$("#gm-msg").hidden=true;
+  $("#gm-pad").innerHTML=emuPadHTML(sys);if(sys==="sms")$("#gm-tx").insertAdjacentHTML("afterbegin",`<button class="gm-ib sm" data-smsswap aria-label="Cambiar botones 1 y 2">1⇄2</button>`);$("#gm-pad").dataset.kind="nes";$("#gm-ov").classList.add("nes","emu");$("#gm-stage").classList.add("nes");$("#gm-msg").hidden=true;
   let host=$("#gm-emu");if(!host){host=document.createElement("div");host.id="gm-emu";$("#gm-stage").appendChild(host)}host.innerHTML="";
   $("#gm-ov").hidden=false;document.body.classList.add("gm-on");emuWake();
   const fail=(t,s)=>{if(!GM||!GM.emu)return;$("#gm-s").textContent="";$("#gm-msg").innerHTML=`<div class="gm-box"><div class="gm-big">😕</div><b>${t}</b><span>${s||""}</span><div class="gm-bb"><button class="btn sec" data-gmx>Salir</button></div></div>`;$("#gm-msg").hidden=false};
@@ -572,3 +573,5 @@ async function nesAct(a){if(GM&&GM.emu){emuAct(a);return}if(!NES||!GM)return;
 
 document.addEventListener("click",async e=>{const d=e.target.closest("[data-dl]");if(!d)return;const [cs,f]=d.dataset.dl.split("|");if((NESROMS||[]).some(r=>r.file===f)){const r=NESROMS.find(r=>r.file===f);romPlay(r.id);return}
   const em=d.querySelector("em");em.textContent="⏳";try{const r=await fetch(`https://raw.githubusercontent.com/retrobrews/${GM_CAT_REPO[cs]}/master/${encodeURIComponent(f)}`);if(!r.ok)throw new Error(r.status);const b=await r.blob();await romAddFiles([new File([b],f)]);em.textContent="✅";toast("Añadido a Consolas. Tócalo otra vez para jugar.")}catch(err){em.textContent="⬇️";toast("No se pudo descargar ("+(err.message||err)+")")}});
+
+document.addEventListener("click",e=>{if(!e.target.closest("[data-smsswap]")||!EMU||EMU.sys!=="sms")return;const v=!smsSwap();try{localStorage.setItem("gjSmsSwap",v?"1":"0")}catch(_){}$("#gm-pad").innerHTML=emuPadHTML("sms");toast(v?"Botones cambiados: ahora el de la izquierda es el 2.":"Botones normales: el de la izquierda es el 1.")});
