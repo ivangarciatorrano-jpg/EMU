@@ -49,7 +49,7 @@ const EMU_PADS={
  gba:{face:[["b","B"],["a","A"]],mid:[["select","SELECT"],["start","START"]],sh:[["l","L"],["r","R"]]},
  snes:{diamond:true,face:[["y","Y"],["x","X"],["b","B"],["a","A"]],mid:[["select","SELECT"],["start","START"]],sh:[["l","L"],["r","R"]]},
  md:{face:[["a","A"],["b","B"],["c","C"]],mid:[["start","START"]],three:true},
- sms:{face:[["a","1"],["b","2"]],mid:[["start","PAUSA"]]}};
+ sms:{face:[["a","1"],["b","2"]],mid:[["start","START"],["pause","PAUSA"]]}};
 /* the page cannot download from other sites: wasm the user installed is served from IndexedDB */
 const EMU_BYTES=new Map();
 (function(){try{const of=window.fetch.bind(window);window.fetch=function(u,o){const k=typeof u==="string"?u:(u&&(u.href||u.url));if(k&&EMU_BYTES.has(k))return Promise.resolve(new Response(EMU_BYTES.get(k),{headers:{"Content-Type":"application/wasm"}}));const eng=k&&Object.keys(EMU_ENG).find(e=>emuWasmUrl(e)===k);if(eng)return of(u,o).then(async r=>{if(!r.ok)return r;const b=await r.arrayBuffer();try{nesTx("cores","readwrite",s=>s.put({id:eng,size:b.byteLength,at:Date.now(),data:new Uint8Array(b)})).then(emuCoresLoad)}catch(e){}return new Response(b,{headers:{"Content-Type":"application/wasm"}})});return of(u,o)}}catch(e){}
@@ -202,7 +202,7 @@ function emuPadHTML(sys){let p=EMU_PADS[sys]||EMU_PADS.nes;if(sys==="sms"&&smsSw
   const face=p.diamond?`<div class="gm-dia">${p.face.map(([k,l])=>`<button data-gk="${k}" class="ab f-${k}">${l}</button>`).join("")}</div>`:`<div class="gm-ab${p.three?" three":""}">${p.face.map(([k,l])=>`<button data-gk="${k}" class="ab">${l}</button>`).join("")}</div>`;
   return `${sh}<div class="gm-dpad">${[["up","▲"],["left","◀"],["right","▶"],["down","▼"]].map(([k,l])=>`<button data-gk="${k}" class="d-${k}">${l}</button>`).join("")}</div><div class="gm-mid">${p.mid.map(([k,l])=>`<button data-gk="${k}" class="sm">${l}</button>`).join("")}</div>${face}`}
 const KC={ArrowUp:38,ArrowDown:40,ArrowLeft:37,ArrowRight:39,Enter:13,ShiftRight:16};
-function emuKey(k,down){if(!EMU||!EMU.play)return;const code=(EMU.sys==="sms"?({...(smsSwap()?{a:"KeyD",b:"KeyS"}:{a:"KeyS",b:"KeyD"}),start:"KeyZ"})[k]:null)||(EMU_KEYS[EMU.eng]||{})[k];if(!code)return;if(down)emuWake();
+function emuKey(k,down){if(!EMU||!EMU.play)return;const code=(EMU.sys==="sms"?({...(smsSwap()?{a:"KeyD",b:"KeyS"}:{a:"KeyS",b:"KeyD"}),start:"KeyS",pause:"KeyZ"})[k]:null)||(EMU_KEYS[EMU.eng]||{})[k];if(!code)return;if(down)emuWake();
   const key=code.startsWith("Key")?code.slice(3).toLowerCase():code==="ShiftRight"?"Shift":code;const kc=KC[code]||(code.startsWith("Key")?code.charCodeAt(3):0);
   const ev=new KeyboardEvent(down?"keydown":"keyup",{code,key,bubbles:true,cancelable:true,location:code==="ShiftRight"?2:0});
   try{Object.defineProperty(ev,"keyCode",{get:()=>kc});Object.defineProperty(ev,"which",{get:()=>kc})}catch(e){}
