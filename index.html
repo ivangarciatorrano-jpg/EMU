@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>CrisVan Juegos</title>
+<meta name="theme-color" content="#DB2777">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Juegos">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+:root{--bg:#EFF1F6;--surface:#FFFFFF;--sunk:#E4E8F0;--ink:#161B2C;--muted:#5D6578;--line:#D7DCE6;--accent:#3550A3;
+ --f-display:"Familjen Grotesk","Avenir Next",system-ui,sans-serif;--f-body:"Figtree",-apple-system,"Segoe UI",system-ui,sans-serif;
+ --sh:0 1px 2px rgba(16,24,48,.05),0 10px 30px -14px rgba(16,24,48,.22);color-scheme:light}
+@media (prefers-color-scheme: dark){:root{--bg:#10131C;--surface:#191E2B;--sunk:#141824;--ink:#E7EAF2;--muted:#98A0B3;--line:#2A3142;--accent:#8EA6EE;color-scheme:dark}}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.4 var(--f-body);-webkit-text-size-adjust:100%}
+.top{position:sticky;top:0;z-index:5;padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(12px);display:flex;align-items:center;gap:10px}
+.top .lg{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(160deg,#F472B6,#DB2777);color:#fff;font-size:19px}
+.top h1{font:700 1.3rem var(--f-display);margin:0}
+.wrap{max-width:720px;margin:0 auto;padding:6px 16px calc(40px + env(safe-area-inset-bottom))}
+.btn{font:600 .92rem var(--f-body);border:0;border-radius:12px;padding:11px 16px;background:var(--accent);color:#fff;cursor:pointer}
+.btn.sec{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.wa-full{width:100%;margin:0 0 6px}
+.hcard{background:var(--surface);border-radius:22px;box-shadow:var(--sh);padding:16px;margin-bottom:12px;display:grid;gap:8px}
+.empty2{text-align:center;color:var(--muted);padding:26px 16px;background:var(--surface);border-radius:20px;box-shadow:var(--sh);margin-bottom:14px}
+.seg{display:flex;background:var(--sunk);border-radius:14px;padding:4px;gap:4px;margin:4px 0 16px;overflow-x:auto}
+.seg button{flex:1;border:0;background:none;color:var(--muted);font:600 .85rem var(--f-body);padding:9px 8px;border-radius:10px;cursor:pointer;white-space:nowrap}
+.seg button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--sh)}
+.h-sec{font:700 .75rem var(--f-body);text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:22px 0 10px}
+.sub2{font-size:.85rem;color:var(--muted);line-height:1.55}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:14px;font:600 .88rem var(--f-body);z-index:9600;max-width:90vw;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+</style>
+<link rel="stylesheet" href="games.css">
+</head>
+<body>
+<header class="top"><div class="lg">🕹️</div><h1>CrisVan Juegos</h1></header>
+<main class="wrap" id="mi-body"></main>
+<div id="toast" hidden></div>
+<script>
+/* mini-entorno (antes lo daba CrisVan Hub) */
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function toast(t){if(!t)return;const e=$("#toast");e.textContent=t;e.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>e.hidden=true,2600)}
+const nrm=s=>String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+const iso2=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const today0=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const daysTo=s=>{if(!s)return null;const [y,m,d]=s.split("-").map(Number);return Math.round((new Date(y,m-1,d)-today0())/864e5)};
+const relD=n=>n==null?"":n===0?"hoy":n===1?"mañana":n===-1?"ayer":n>0?`en ${n} días`:`hace ${-n} días`;
+const seg=(items,cur,attr)=>`<div class="seg" role="tablist">${items.map(([k,l])=>`<button role="tab" data-${attr}="${k}" aria-selected="${k===cur}">${l}</button>`).join("")}</div>`;
+const B=()=>$("#mi-body");
+let miState={tab:(()=>{try{return localStorage.getItem("gjTab")||"arcade"}catch(e){return"arcade"}})()};
+const keepFocus=fn=>{const a=document.activeElement;if(a&&a.matches&&a.matches("#mi-body input")&&!miState.force)return;miState.force=false;fn()};
+const curApp="juegos",profile="local",dbRaw=null;
+</script>
+<script src="app.js"></script>
+<script>
+addEventListener("click",e=>{const t=e.target.closest("[data-gmtab]");if(t)try{localStorage.setItem("gjTab",t.dataset.gmtab)}catch(_){}} ,true);
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+renderJuegos();
+if("serviceWorker" in navigator)addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script>
+</body>
+</html>
