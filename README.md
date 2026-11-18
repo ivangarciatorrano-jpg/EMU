@@ -3,6 +3,7 @@
 Web app de juegos para el móvil (se instala en la pantalla de inicio y funciona sin conexión).
 
 - **Arcade**: Serpiente, Bloques, Rompeladrillos, 2048, Pajarito y Buscaminas, con récords.
+- **Fútbol Pro** (`futbol.html`): partido 11 contra 11 en 3D con cámara de televisión, física del balón, fueras de banda, córners, faltas y penaltis. Se abre desde Arcade o directamente en `…/EMU/futbol.html`.
 - **Consolas**: NES, Super Nintendo, Game Boy / Color, Game Boy Advance, Mega Drive, Master System, Game Gear, Nintendo DS, Nintendo 64, PlayStation, PC Engine y Neo Geo Pocket. Mando táctil (o encima de la imagen en horizontal), mando Bluetooth, turbo, avance rápido y guardado de partida. Acepta `.zip` y `.7z`.
 - **Copia de seguridad**: exporta/importa juegos, partidas y récords en un archivo `.cvj`.
 - **Juegos gratis**: ~300 juegos *homebrew* (colección [retrobrews](https://github.com/retrobrews)) que se añaden con un toque.
