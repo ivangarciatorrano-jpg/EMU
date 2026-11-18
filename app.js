@@ -5,8 +5,15 @@ const GM_LIST=[
  {id:"brick",e:"🏓",n:"Rompeladrillos",d:"Rebota la bola y rompe el muro",c:"#F59E0B"},
  {id:"g2048",e:"🔢",n:"2048",d:"Desliza y junta números iguales",c:"#CA8A04"},
  {id:"bird",e:"🐤",n:"Pajarito",d:"Toca para volar entre tubos",c:"#0EA5E9"},
- {id:"mines",e:"💣",n:"Buscaminas",d:"Despeja el campo sin pisar minas",c:"#64748B",low:true,unit:"s"}
+ {id:"mines",e:"💣",n:"Buscaminas",d:"Despeja el campo sin pisar minas",c:"#64748B",low:true,unit:"s"},
+ {id:"futbol",e:"⚽",n:"Fútbol Pro",d:"11 contra 11 con cámara de TV",c:"#059669",ext:"futbol.html",s:"Partido 11 contra 11 · ✕ para salir"}
 ];
+function gmExtRec(){try{const r=JSON.parse(localStorage.getItem("futbolProRec")||"null");if(r&&(r.w+r.d+r.l))return `🏆 ${r.w}V · ${r.d}E · ${r.l}D`}catch(e){}return "Sin partidos aún"}
+function gmExtOpen(def){gmEnsure();GM={id:def.id,ejs:true,def,g:{LW:256,LH:224},state:"play"};
+  $("#gm-t").textContent=def.e+" "+def.n;$("#gm-s").textContent=def.s||"";
+  $("#gm-tx").innerHTML="";$("#gm-pad").innerHTML="";$("#gm-msg").hidden=true;$("#gm-ov").classList.add("ejs");
+  let f=$("#gm-ejs");if(f)f.remove();f=document.createElement("iframe");f.id="gm-ejs";f.setAttribute("allow","autoplay; fullscreen; gamepad");f.src=def.ext;$("#gm-stage").appendChild(f);
+  $("#gm-ov").hidden=false;document.body.classList.add("gm-on")}
 let GMREC={},GMRECP=null;
 function gmRecLoad(){if(GMRECP===profile)return;GMRECP=profile;try{GMREC=JSON.parse(localStorage.getItem("gfGames_"+profile)||"{}")}catch(e){GMREC={}}
   try{if(dbRaw){const d=dbRaw.doc("profiles/"+profile+"/ajustes/juegos");const p=d.get&&d.get();p&&p.then&&p.then(s=>{const o=s&&s.exists?JSON.parse(JSON.stringify(s.data()||{})):{};const r=o.rec||{};let ch=false;for(const k in r){const L=(GM_LIST.find(g=>g.id===k)||{}).low;if(GMREC[k]==null||(L?r[k]<GMREC[k]:r[k]>GMREC[k])){GMREC[k]=r[k];ch=true}}if(ch){try{localStorage.setItem("gfGames_"+profile,JSON.stringify(GMREC))}catch(e){}if(curApp==="juegos")renderJuegos()}}).catch(()=>{})}}catch(e){}}
@@ -382,7 +389,7 @@ document.addEventListener("change",e=>{if(e.target.id==="bk-file"&&e.target.file
 function renderJuegos(){gmRecLoad();if(NESROMS===null){NESROMS=[];cloudLoad().then(emuCoresLoad).then(nesList).then(()=>{setTimeout(gmStoreDiag,300);gmSyncUp()})}
   keepFocus(()=>{const tab=miState.tab||"arcade";const tabs=[["arcade","Arcade"],["consolas","Consolas"],["bajar","Juegos gratis"]];let body="";
   if(tab==="arcade"){body=`<div class="gm-hero"><div><small>Para el móvil · se juega con el dedo</small><b>Arcade CrisVan</b><span>Clásicos de siempre, rehechos para pantalla táctil. Tus récords se guardan en tu perfil.</span></div><div class="gm-hball">🕹️</div></div>
-    <div class="gm-grid">${GM_LIST.map(g=>{const r=GMREC[g.id];return `<button class="gm-card" style="--c:${g.c}" data-gmplay="${g.id}"><span class="gm-ic">${g.e}</span><b>${g.n}</b><small>${g.d}</small><em>${r!=null?`🏆 ${r}${g.unit||""}`:"Sin récord aún"}</em></button>`}).join("")}</div>`}
+    <div class="gm-grid">${GM_LIST.map(g=>{const r=GMREC[g.id];return `<button class="gm-card" style="--c:${g.c}" data-gmplay="${g.id}"><span class="gm-ic">${g.e}</span><b>${g.n}</b><small>${g.d}</small><em>${g.ext?gmExtRec():r!=null?`🏆 ${r}${g.unit||""}`:"Sin récord aún"}</em></button>`}).join("")}</div>`}
   else if(tab==="bajar"){const cs=miState.cs||"sms";body=`<div class="gm-hero dl"><div><small>Homebrew · gratis y legal</small><b>Descargar juegos</b><span>Juegos hechos por aficionados que sus autores comparten gratis (colección <i>retrobrews</i>). Pulsa ⬇️ y se añade a tus <b>Consolas</b> al momento.</span></div><div class="gm-hball">⬇️</div></div>
     <div class="gm-chips">${Object.keys(GM_CAT).map(k=>`<button data-gmcs="${k}" aria-pressed="${k===cs}">${EMU_SYS[k].e} ${EMU_SYS[k].n} <small>${GM_CAT[k].length}</small></button>`).join("")}</div>
     <input class="gm-q" id="gm-cq" type="search" placeholder="Buscar juego…" value="${esc(miState.cq||"")}" autocomplete="off">
@@ -399,7 +406,7 @@ function renderJuegos(){gmRecLoad();if(NESROMS===null){NESROMS=[];cloudLoad().th
   B().innerHTML=seg(tabs,tab,"gmtab")+body})}
 document.addEventListener("click",e=>{if(curApp!=="juegos")return;
   const tb=e.target.closest("[data-gmtab]");if(tb){miState.tab=tb.dataset.gmtab;miState.force=true;renderJuegos();window.scrollTo(0,0);return}
-  const p=e.target.closest("[data-gmplay]");if(p){gmOpen(p.dataset.gmplay);return}
+  const p=e.target.closest("[data-gmplay]");if(p){const d=GM_LIST.find(g=>g.id===p.dataset.gmplay);if(d&&d.ext)gmExtOpen(d);else gmOpen(p.dataset.gmplay);return}
   if(e.target.closest("[data-nesadd]")){$("#nes-file")?.click();return}
   const np=e.target.closest("[data-nesplay]");if(np){romPlay(np.dataset.nesplay);return}
   const cs=e.target.closest("[data-gmcs]");if(cs){miState.cs=cs.dataset.gmcs;miState.force=true;renderJuegos();return}
